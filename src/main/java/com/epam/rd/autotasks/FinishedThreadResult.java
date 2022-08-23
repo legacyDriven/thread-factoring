@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 public class FinishedThreadResult {
     private final String threadName;
     private final LocalDateTime finished;
-    private final Throwable throwable;
+    private final Throwable throwable; //error origin
 
     public FinishedThreadResult(final String threadName) {
         this(threadName, null);

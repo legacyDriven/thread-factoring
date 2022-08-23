@@ -1,7 +1,7 @@
 # Thread Factoring 
 
 ## Description 
-1. Implement the `getInstance` method of [`com.epam.rd.autotasks.ThreadUnion`](src/main/java/com/epam/rd/autotasks/ThreadUnion.java).
+1. Implement the `newInstance` method of [`com.epam.rd.autotasks.ThreadUnion`](src/main/java/com/epam/rd/autotasks/ThreadUnion.java).
 2. It should return a `ThreadUnion` instance.
 3. `ThreadUnion` is a named `ThreadFactory` that creates threads, monitors their execution results, and allows to call the operation of their group shutdown.
 

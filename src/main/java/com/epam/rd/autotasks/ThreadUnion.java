@@ -15,6 +15,8 @@ public interface ThreadUnion extends ThreadFactory {
     List<FinishedThreadResult> results();
 
     static ThreadUnion newInstance(String name){
-        throw new UnsupportedOperationException();
+        if(name==null) throw new UnsupportedOperationException();
+
+        return new ThreadUnionImpl(name);
     }
 }
