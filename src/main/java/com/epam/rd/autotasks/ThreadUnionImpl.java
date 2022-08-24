@@ -2,7 +2,6 @@ package com.epam.rd.autotasks;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -19,11 +18,14 @@ class ThreadUnionImpl implements ThreadUnion {
 
     private final Lock lock = new ReentrantLock();
 
+    private List<FinishedThreadResult> finishedThreadResults;
+
     ThreadUnionImpl(String name) {
         this.threadUnionName = name;
         this.workerNumber = new AtomicInteger(0);
         this.unionWorkers = new CopyOnWriteArrayList<>();
         this.isShutdownInitiated = false;
+        this.finishedThreadResults = new CopyOnWriteArrayList<>();
         }
 
     @Override
@@ -36,26 +38,25 @@ class ThreadUnionImpl implements ThreadUnion {
         return Math.toIntExact(unionWorkers.stream().filter(Thread::isAlive).count());
     }
 
-    private void initiateShutdown(){
-        try{
-            lock.lock();
-            isShutdownInitiated = false;
-            for(Thread t : unionWorkers){
-                t.interrupt();
-            }
-        } finally {
-            lock.unlock();
-        }
+    private void blockNewThreadCreation(){
+        isShutdownInitiated=true;
     }
 
     @Override
     public void shutdown() {
-        initiateShutdown();
+        blockNewThreadCreation();
+        killAllThreads();
+    }
+
+    private void killAllThreads() {
+        for(Thread t : unionWorkers){
+            t.interrupt();
+        }
     }
 
     @Override
     public boolean isShutdown() {
-        return false;
+        return isShutdownInitiated;
     }
 
     @Override
@@ -70,11 +71,14 @@ class ThreadUnionImpl implements ThreadUnion {
 
     @Override
     public List<FinishedThreadResult> results() {
-        return null;
+        return finishedThreadResults;
     }
 
     @Override
-    public Thread newThread(Runnable r) {
-        return null;
+    public synchronized Thread newThread(Runnable r) {
+        Thread worker = new Worker(r);
+        worker.setName(threadUnionName + "-worker-" + unionWorkers.size());
+        unionWorkers.add(worker);
+        return worker;
     }
 }
