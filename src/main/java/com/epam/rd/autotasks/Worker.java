@@ -1,13 +1,18 @@
 package com.epam.rd.autotasks;
 
+import java.util.List;
+
 public class Worker extends Thread{
 
     private final Runnable passedRun;
 
     private String workerName;
 
-    public Worker(Runnable runnable) {
+    private final List<FinishedThreadResult> resultRepository;
+
+    public Worker(Runnable runnable, List<FinishedThreadResult> resultRepository) {
         this.passedRun = runnable;
+        this.resultRepository = resultRepository;
     }
 
     @Override
@@ -17,9 +22,7 @@ public class Worker extends Thread{
             passedRun.run();
         } catch (Throwable e){ argument = e;
     } finally {
-         return new FinishedThreadResult(workerName, argument);
+            resultRepository.add(new FinishedThreadResult(workerName, argument));
         }
     }
-
-
 }

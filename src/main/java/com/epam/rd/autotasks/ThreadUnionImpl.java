@@ -2,7 +2,6 @@ package com.epam.rd.autotasks;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -10,9 +9,7 @@ class ThreadUnionImpl implements ThreadUnion {
 
     private final String threadUnionName;
 
-    private final AtomicInteger workerNumber;
-
-    private final List<Thread> unionWorkers;
+    private final List<Worker> unionWorkers;
 
     private volatile boolean isShutdownInitiated;
 
@@ -22,7 +19,6 @@ class ThreadUnionImpl implements ThreadUnion {
 
     ThreadUnionImpl(String name) {
         this.threadUnionName = name;
-        this.workerNumber = new AtomicInteger(0);
         this.unionWorkers = new CopyOnWriteArrayList<>();
         this.isShutdownInitiated = false;
         this.finishedThreadResults = new CopyOnWriteArrayList<>();
@@ -61,12 +57,30 @@ class ThreadUnionImpl implements ThreadUnion {
 
     @Override
     public void awaitTermination() {
-
+        isShutdownInitiated = true;
+        try{
+            lock.lock();
+            while(!areWorkersDead()){
+               Thread.sleep(10);
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } finally {
+            lock.unlock();
+        }
     }
 
     @Override
     public boolean isFinished() {
-        return false;
+        return isShutdownInitiated && areWorkersDead();
+    }
+
+    private boolean areWorkersDead(){
+        boolean result = true;
+        for (Worker t : unionWorkers){
+            if(t.isAlive()) result = false;
+        }
+        return result;
     }
 
     @Override
@@ -76,7 +90,8 @@ class ThreadUnionImpl implements ThreadUnion {
 
     @Override
     public synchronized Thread newThread(Runnable r) {
-        Thread worker = new Worker(r);
+        if(isShutdownInitiated) throw new IllegalStateException();
+        Worker worker = new Worker(r, finishedThreadResults);
         worker.setName(threadUnionName + "-worker-" + unionWorkers.size());
         unionWorkers.add(worker);
         return worker;
