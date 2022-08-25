@@ -55,6 +55,7 @@ class ThreadUnionImpl implements ThreadUnion {
         return isShutdownInitiated;
     }
 
+    //works, probably should try implementation with countdownlatch
     @Override
     public void awaitTermination() {
         isShutdownInitiated = true;
