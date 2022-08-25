@@ -2,20 +2,25 @@ package com.epam.rd.autotasks;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static java.lang.Thread.sleep;
 
 class ThreadUnionImpl implements ThreadUnion {
 
     private final String threadUnionName;
 
-    private final List<Worker> unionWorkers;
+    final List<Worker> unionWorkers;
 
     private volatile boolean isShutdownInitiated;
 
     private final Lock lock = new ReentrantLock();
 
-    private List<FinishedThreadResult> finishedThreadResults;
+    private final List<FinishedThreadResult> finishedThreadResults;
+
+    CountDownLatch countDownLatch;
 
     ThreadUnionImpl(String name) {
         this.threadUnionName = name;
@@ -62,7 +67,7 @@ class ThreadUnionImpl implements ThreadUnion {
         try{
             lock.lock();
             while(!areWorkersDead()){
-               Thread.sleep(10);
+               sleep(10);
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -70,6 +75,12 @@ class ThreadUnionImpl implements ThreadUnion {
             lock.unlock();
         }
     }
+
+    //TODO implement with countdownlatch syncronization
+//    public void awaitTermination(){
+//        isShutdownInitiated = true;
+//        countDownLatch = new CountDownLatch(this.activeSize());
+//    }
 
     @Override
     public boolean isFinished() {
@@ -79,7 +90,10 @@ class ThreadUnionImpl implements ThreadUnion {
     private boolean areWorkersDead(){
         boolean result = true;
         for (Worker t : unionWorkers){
-            if(t.isAlive()) result = false;
+            if (t.isAlive()) {
+                result = false;
+                break;
+            }
         }
         return result;
     }

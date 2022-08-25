@@ -6,8 +6,6 @@ public class Worker extends Thread{
 
     private final Runnable passedRun;
 
-    private String workerName;
-
     private final List<FinishedThreadResult> resultRepository;
 
     public Worker(Runnable runnable, List<FinishedThreadResult> resultRepository) {
@@ -22,7 +20,8 @@ public class Worker extends Thread{
             passedRun.run();
         } catch (Throwable e){ argument = e;
     } finally {
-            resultRepository.add(new FinishedThreadResult(workerName, argument));
+            resultRepository.add(new FinishedThreadResult(getName(), argument));
         }
     }
+
 }
